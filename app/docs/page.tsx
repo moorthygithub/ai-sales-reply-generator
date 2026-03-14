@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Bot, Send, ShieldCheck, Zap } from "lucide-react";
+import Image from "next/image";
 
 export default function DocsPage() {
   return (
@@ -20,6 +21,19 @@ export default function DocsPage() {
           <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-lg max-w-2xl">
             Learn how to seamlessly connect your Gmail, generate professional sales responses using Gemini AI, and track your daily API quotas.
           </p>
+        </div>
+
+        {/* Dashboard Screenshot */}
+        <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white p-2">
+          <div className="relative w-full aspect-[16/9] md:aspect-[21/9] rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+            <Image 
+              src="/dashboard-screenshot.png"
+              alt="SaaS Dashboard Interface"
+              fill
+              className="object-cover object-top"
+              priority
+            />
+          </div>
         </div>
 
         <Separator className="bg-slate-200 dark:bg-slate-800" />
