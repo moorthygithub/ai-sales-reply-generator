@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { incrementEmailSent } from "@/lib/usage-tracker";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +37,8 @@ export async function POST(req: NextRequest) {
     };
 
     await transporter.sendMail(mailOptions);
+
+    incrementEmailSent();
 
     return NextResponse.json({ success: true, message: "Email sent successfully." });
   } catch (error: unknown) {

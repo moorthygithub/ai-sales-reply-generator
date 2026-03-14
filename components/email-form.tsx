@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -16,6 +16,8 @@ interface EmailFormProps {
   onGenerate: (data: { customerEmail: string; emailMessage: string; tone: string }) => void;
   onClear: () => void;
   isLoading: boolean;
+  prefillEmail?: string;
+  prefillMessage?: string;
 }
 
 const tones = [
@@ -29,11 +31,22 @@ export default function EmailForm({
   onGenerate,
   onClear,
   isLoading,
+  prefillEmail = "",
+  prefillMessage = "",
 }: EmailFormProps) {
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
+  const [customerEmail, setCustomerEmail] = useState(prefillEmail);
+  const [emailMessage, setEmailMessage] = useState(prefillMessage);
   const [tone, setTone] = useState("professional");
   const [error, setError] = useState("");
+
+  // Auto-fill when an email is selected from Gmail inbox
+  useEffect(() => {
+    if (prefillEmail) setCustomerEmail(prefillEmail);
+  }, [prefillEmail]);
+
+  useEffect(() => {
+    if (prefillMessage) setEmailMessage(prefillMessage);
+  }, [prefillMessage]);
 
   const handleSubmit = () => {
     if (!customerEmail.trim() || !customerEmail.includes("@")) {
@@ -60,10 +73,7 @@ export default function EmailForm({
     <div className="space-y-5">
       {/* Customer Email Address */}
       <div className="space-y-2">
-        <label
-          htmlFor="customer-email"
-          className="text-sm font-medium text-foreground"
-        >
+        <label htmlFor="customer-email" className="text-sm font-medium text-foreground">
           Customer Email Address
         </label>
         <input
@@ -82,21 +92,18 @@ export default function EmailForm({
 
       {/* Customer Message */}
       <div className="space-y-2">
-        <label
-          htmlFor="customer-message"
-          className="text-sm font-medium text-foreground"
-        >
+        <label htmlFor="customer-message" className="text-sm font-medium text-foreground">
           Customer Message
         </label>
         <Textarea
           id="customer-message"
-          placeholder="Paste the customer's message here..."
+          placeholder="Paste the customer's message here, or select an email from the inbox…"
           value={emailMessage}
           onChange={(e) => {
             setEmailMessage(e.target.value);
             if (error) setError("");
           }}
-          rows={6}
+          rows={7}
           className="resize-none bg-muted/30 border-border/50 focus:border-primary/50 transition-colors"
           disabled={isLoading}
         />
