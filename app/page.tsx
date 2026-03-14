@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import EmailForm from "@/components/email-form";
+import ReplyOutput from "@/components/reply-output";
 import {
   Card,
   CardContent,
@@ -8,10 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import EmailForm from "@/components/email-form";
-import ReplyOutput from "@/components/reply-output";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { AlertCircle, Bot, Mail, Sparkles } from "lucide-react";
+import { useState } from "react";
 
 interface GeneratedReply {
   customerEmail: string;
@@ -21,9 +20,7 @@ interface GeneratedReply {
 }
 
 export default function Home() {
-  const [generatedReply, setGeneratedReply] = useState<GeneratedReply | null>(
-    null
-  );
+  const [generatedReply, setGeneratedReply] = useState<GeneratedReply | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState("");
 
@@ -33,7 +30,6 @@ export default function Home() {
     setGeneratedReply(null);
 
     try {
-      // Map emailMessage back to exactly what the AI API expects ("email")
       const response = await fetch("/api/generate-reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,94 +57,114 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-indigo-50/40 dark:from-slate-950 dark:via-violet-950/20 dark:to-indigo-950/20">
-      {/* Decorative background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-violet-400/10 blur-3xl" />
-        <div className="absolute top-1/3 -left-20 h-60 w-60 rounded-full bg-indigo-400/10 blur-3xl" />
-        <div className="absolute -bottom-40 right-1/4 h-80 w-80 rounded-full bg-purple-400/8 blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans">
+      {/* Subtle Grid Background */}
+      <div className="fixed inset-0 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+      <div className="fixed inset-0 pointer-events-none bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/50 dark:from-indigo-950/20 dark:via-slate-950 dark:to-purple-950/20" />
 
-      <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:py-16">
-        {/* Header */}
-        <header className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium mb-4">
-            <Sparkles className="h-3 w-3" />
-            AI-Powered Sales Tool
+      {/* Main Content Area */}
+      <main className="relative z-10 flex-grow py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm font-semibold mb-6 shadow-sm ring-1 ring-inset ring-indigo-700/10 dark:ring-indigo-300/20 transition-all hover:scale-105">
+            <Sparkles className="h-4 w-4" />
+            <span>AI-Powered Workflow</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-violet-700 via-indigo-600 to-purple-600 dark:from-violet-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-            AI Sales Reply Generator
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
+            AI Sales Reply <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Generator</span>
           </h1>
-          <p className="mt-3 text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
-            Generate professional sales email replies instantly. Paste a customer
-            email, pick a tone, and let AI craft the perfect response.
+          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            Empower your sales team. Provide the customer context, and let our AI craft the perfect, professional response in seconds.
           </p>
-        </header>
+        </div>
 
-        {/* Main Card */}
-        <Card className="border-border/40 bg-card/80 backdrop-blur-sm shadow-xl shadow-violet-500/5">
-          <CardHeader>
-            <CardTitle className="text-lg">Compose Reply</CardTitle>
-            <CardDescription>
-              Paste the customer&apos;s email below and select your preferred
-              reply tone.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <EmailForm
-              onGenerate={handleGenerate}
-              onClear={handleClear}
-              isLoading={isLoading}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Error Display */}
-        {apiError && (
-          <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
-            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-destructive">
-                Something went wrong
-              </p>
-              <p className="text-sm text-destructive/80 mt-1">{apiError}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Output Section */}
-        {generatedReply && (
-          <div className="mt-6">
-            <Card className="border-border/40 bg-card/80 backdrop-blur-sm shadow-xl shadow-violet-500/5">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-violet-500" />
-                  Generated Reply
+        {/* Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column: Input Form */}
+          <div className="lg:col-span-5 xl:col-span-5 flex flex-col gap-6">
+            <Card className="border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl shadow-indigo-100/20 dark:shadow-none overflow-hidden transition-all duration-300">
+              <div className="h-1 w-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-indigo-500" />
+                  Customer Input
                 </CardTitle>
-                <CardDescription>
-                  Your AI-crafted email reply is ready. Review and copy it below.
+                <CardDescription className="text-sm">
+                  Enter the details of the inquiry you received.
                 </CardDescription>
               </CardHeader>
-              <Separator className="mx-6 w-auto bg-border/50" />
-              <CardContent className="pt-4">
-                <ReplyOutput
-                  customerEmail={generatedReply.customerEmail}
-                  intent={generatedReply.intent}
-                  subject={generatedReply.subject}
-                  reply={generatedReply.reply}
+              <CardContent>
+                <EmailForm
+                  onGenerate={handleGenerate}
+                  onClear={handleClear}
+                  isLoading={isLoading}
                 />
               </CardContent>
             </Card>
           </div>
-        )}
 
-        {/* Footer */}
-        <footer className="mt-10 text-center">
-          <p className="text-xs text-muted-foreground/60">
-            Powered by OpenAI &middot; Built with Next.js &amp; shadcn/ui
+          {/* Right Column: Output */}
+          <div className="lg:col-span-7 xl:col-span-7 flex flex-col gap-6">
+            
+            {/* Error Message */}
+            {apiError && (
+              <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">Generation Failed</h3>
+                  <p className="text-sm text-red-700/80 dark:text-red-400/80 mt-1">{apiError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Success Output */}
+            {generatedReply ? (
+              <Card className="border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl shadow-indigo-100/20 dark:shadow-none overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-500">
+                <CardHeader className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800/50 pb-5">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Bot className="h-5 w-5 text-purple-500" />
+                      AI Generated Response
+                    </CardTitle>
+                    <span className="inline-flex items-center rounded-md bg-green-50 dark:bg-green-500/10 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
+                      Ready to send
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <ReplyOutput
+                    customerEmail={generatedReply.customerEmail}
+                    intent={generatedReply.intent}
+                    subject={generatedReply.subject}
+                    reply={generatedReply.reply}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              /* Empty State Placeholder */
+              <Card className="border-dashed border-2 border-slate-200 dark:border-slate-800 bg-transparent shadow-none h-full min-h-[400px] flex flex-col items-center justify-center text-center p-8 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
+                <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-4 mb-4">
+                  <Bot className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No generated reply yet</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+                  Fill out the form on the left and click &quot;Generate Reply&quot; to see the AI&apos;s personalized response appear here.
+                </p>
+              </Card>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="py-6 border-t border-slate-200/60 dark:border-slate-800/60 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm mt-auto">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-sm text-slate-500 dark:text-slate-400 flex justify-center items-center gap-2">
+            Built with Next.js &middot; Powered by Gemini AI
           </p>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
