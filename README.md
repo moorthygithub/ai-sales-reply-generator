@@ -6,12 +6,14 @@ An AI-powered sales email assistant built with **Next.js 16**, **TypeScript**, *
 
 ## ✨ Features
 
-- 📥 **Gmail Integration** — Authenticate with Google OAuth2 and fetch your latest 5 unread emails directly in the app
+- 📥 **Gmail Integration** — Authenticate with Google OAuth2, safely fetch your unread emails, and paginate through your inbox history
 - 🤖 **Gemini AI Replies** — Powered by `gemini-2.5-flash` to generate Customer Intent, Subject Line, and Email Body
 - 📨 **Send via Nodemailer** — Send the AI-generated reply directly to the customer from within the app
-- 🎨 **3-Panel Layout** — Gmail Inbox | Input Form | AI Output — fully responsive
-- 🔒 **Secure Auth** — OAuth2 tokens stored in HTTP-only cookies (never exposed to the client)
+- 🎨 **3-Panel SaaS Layout** — Clean, responsive 25/35/40 split dashboard (Gmail Inbox | Input Form | AI Output)
+- 📊 **Live Quota Tracking** — Tracks active token usage and emails dispatched
+- 🔒 **Secure Auth & Logout** — OAuth2 tokens stored in HTTP-only cookies with a dedicated secure logout flow
 - 🎛️ **Tone Selector** — Choose between Professional, Friendly, Formal, or Short reply styles
+- 📚 **Integrated Documentation** — Built-in User Guide located at `/docs`
 
 ---
 
@@ -140,9 +142,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 |---|---|---|
 | `/api/auth/google/login` | GET | Redirects to Google OAuth consent |
 | `/api/auth/google/callback` | GET | Handles OAuth code, sets secure cookies |
-| `/api/gmail/messages` | GET | Returns latest 5 unread Gmail messages |
-| `/api/generate-reply` | POST | Generates AI reply via Gemini |
-| `/api/send-email` | POST | Sends email via Nodemailer/Gmail SMTP |
+| `/api/auth/google/logout` | POST | Securely clears OAuth HTTP-only cookies |
+| `/api/gmail/messages` | GET | Returns unread Gmail messages (supports `pageToken` pagination) |
+| `/api/generate-reply` | POST | Generates AI reply via Gemini, increments token tracking |
+| `/api/send-email` | POST | Sends email via Nodemailer/Gmail SMTP, increments email tracking |
+| `/api/usage-stats` | GET | Exposes current usage quotas to the dashboard |
 
 ---
 

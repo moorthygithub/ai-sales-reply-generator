@@ -14,6 +14,11 @@ function getHeader(headers: { name?: string | null; value?: string | null }[], n
 }
 
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const pageToken = searchParams.get("pageToken") || undefined;
+  const maxResultsParam = searchParams.get("maxResults");
+  const maxResults = maxResultsParam ? parseInt(maxResultsParam, 10) : 5;
+
   const accessToken = req.cookies.get("gmail_access_token")?.value;
   const refreshToken = req.cookies.get("gmail_refresh_token")?.value;
 
@@ -30,14 +35,16 @@ export async function GET(req: NextRequest) {
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    // Fetch list of latest 5 unread messages
+    // Fetch list of latest unread messages with pagination
     const listRes = await gmail.users.messages.list({
       userId: "me",
       q: "is:unread",
-      maxResults: 5,
+      maxResults,
+      pageToken,
     });
 
     const messages = listRes.data.messages ?? [];
+    const nextPageToken = listRes.data.nextPageToken;
 
     if (messages.length === 0) {
       return NextResponse.json({ messages: [], authenticated: true });
@@ -71,7 +78,11 @@ export async function GET(req: NextRequest) {
     );
 
     // If token was refreshed, update cookie
-    const response = NextResponse.json({ messages: detailedMessages, authenticated: true });
+    const response = NextResponse.json({ 
+      messages: detailedMessages, 
+      nextPageToken,
+      authenticated: true 
+    });
     const newCredentials = oauth2Client.credentials;
     if (newCredentials.access_token && newCredentials.access_token !== accessToken) {
       response.cookies.set("gmail_access_token", newCredentials.access_token, {
