@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { incrementAIRequest, addTokenUsage } from "@/lib/usage-tracker";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -26,16 +27,25 @@ export async function POST(req: NextRequest) {
 
     const selectedTone = tone || "professional";
 
-    const prompt = `You are a professional sales assistant.
+    const prompt = `You are an AI assistant designed ONLY to generate professional sales email replies.
 
-Write a clear and professional reply to the customer email.
+Analyze the customer message and extract:
+1. Customer Intent
+2. Subject Line
+3. Email Reply
 
-Rules:
+Important Rules:
+- Only generate replies for BUSINESS or SALES related inquiries.
+- Examples: pricing, product details, demos, quotes, support, partnerships.
 - Be polite and concise
-- Address the customer's request
 - Encourage further conversation
 - Keep it under 120 words
 - Tone: ${selectedTone}
+
+If the message is unrelated to business (e.g. jokes, personal advice, pets, weather, etc), Return:
+- intent: "Non-business inquiry"
+- subject: "Regarding Your Message"
+- reply: "Thank you for reaching out. Please note that I am an AI assistant designed exclusively to handle business, product, or sales-related inquiries. I kindly ask that you send a relevant request so I can assist you properly."
 
 Return exactly valid JSON in this format:
 {
@@ -99,6 +109,14 @@ Return ONLY valid JSON. Do not wrap in markdown code blocks.`;
         { status: 500 }
       );
     }
+
+    const usage = response.usageMetadata;
+    const promptTokens = usage?.promptTokenCount || 0;
+    const responseTokens = usage?.candidatesTokenCount || 0;
+    const totalTokens = usage?.totalTokenCount || 0;
+    
+    incrementAIRequest();
+    addTokenUsage(promptTokens, responseTokens, totalTokens);
 
     return NextResponse.json(parsed);
   } catch (error: unknown) {

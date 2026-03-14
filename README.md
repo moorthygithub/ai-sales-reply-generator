@@ -1,84 +1,204 @@
 # AI Sales Reply Generator
 
-A production-ready AI SaaS tool built to help sales teams instantly generate professional, context-aware email replies to customer inquiries using the Gemini 2.5 Flash AI model.
+An AI-powered sales email assistant built with **Next.js 16**, **TypeScript**, **Tailwind CSS**, and **shadcn/ui**. Connect your Gmail account to fetch real customer emails, then let Google Gemini AI craft professional sales replies in seconds.
 
-## Features
+---
 
-- **Instant AI Replies**: Generate polite, concise, and professional email replies under 120 words.
-- **Tone Customization**: Select from multiple response tones (Professional, Friendly, Formal, Short).
-- **Intent Recognition**: AI automatically parses and displays the core "Customer Intent" from the incoming message.
-- **Direct Email Sending**: Built-in Nodemailer integration allows sending the generated reply directly to the customer's email address from the browser.
-- **Copy to Clipboard**: One-click copying of the generated subject and body.
-- **Modern UI**: Clean, responsive, glassmorphism interface built with shadcn/ui and Tailwind CSS.
+## ✨ Features
 
-## Tech Stack
+- 📥 **Gmail Integration** — Authenticate with Google OAuth2 and fetch your latest 5 unread emails directly in the app
+- 🤖 **Gemini AI Replies** — Powered by `gemini-2.5-flash` to generate Customer Intent, Subject Line, and Email Body
+- 📨 **Send via Nodemailer** — Send the AI-generated reply directly to the customer from within the app
+- 🎨 **3-Panel Layout** — Gmail Inbox | Input Form | AI Output — fully responsive
+- 🔒 **Secure Auth** — OAuth2 tokens stored in HTTP-only cookies (never exposed to the client)
+- 🎛️ **Tone Selector** — Choose between Professional, Friendly, Formal, or Short reply styles
 
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
-- **UI Components**: shadcn/ui (Radix Primitives)
-- **Icons**: Lucide React
-- **AI Integration**: Google GenAI SDK (`@google/genai`) - Gemini 2.5 Flash
-- **Email Delivery**: Nodemailer (via Gmail SMTP)
+---
 
-## Project Structure
+## 🖥️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| Components | shadcn/ui (Card, Button, ScrollArea, Separator, Select, Textarea) |
+| AI | Google Gemini (`@google/genai`) |
+| Gmail | Google APIs Node.js client (`googleapis`) |
+| Email Sending | Nodemailer + Gmail SMTP |
+| Auth | Google OAuth2 (HTTP-only cookie session) |
+
+---
+
+## 📁 Project Structure
 
 ```
-ai-sales-reply-generator/
 ├── app/
-│   ├── api/
-│   │   ├── generate-reply/
-│   │   │   └── route.ts       # Handles Gemini AI prompt generation
-│   │   └── send-email/
-│   │       └── route.ts       # Handles Nodemailer SMTP dispatch
-│   ├── globals.css            # Tailwind & shadcn UI Theme config (oklch)
-│   ├── layout.tsx             # Root layout with Inter font & SEO metadata
-│   └── page.tsx               # Main UI Dashboard
+│   ├── page.tsx                          # Main 3-panel UI
+│   ├── layout.tsx
+│   ├── globals.css
+│   └── api/
+│       ├── generate-reply/route.ts       # Gemini AI reply generation
+│       ├── send-email/route.ts           # Nodemailer email sender
+│       ├── gmail/
+│       │   └── messages/route.ts         # Fetch unread Gmail messages
+│       └── auth/google/
+│           ├── login/route.ts            # Redirect → Google OAuth consent
+│           └── callback/route.ts         # Handle OAuth callback + set cookies
 ├── components/
-│   ├── email-form.tsx         # User input form (Email, Message, Tone)
-│   ├── reply-output.tsx       # AI result display (Intent, Subject, Reply, Send/Copy actions)
-│   └── ui/                    # Reusable shadcn/ui components (Card, Button, Select, etc)
+│   ├── gmail-inbox.tsx                   # Left panel: Gmail inbox list
+│   ├── email-form.tsx                    # Center panel: Input form
+│   ├── reply-output.tsx                  # Right panel: AI reply output
+│   └── ui/                              # shadcn/ui components
 ├── lib/
-│   └── utils.ts               # Tailwind class merge utility
-└── .env.local                 # Environment variables (API keys & SMTP credentials)
+│   ├── google-auth.ts                    # OAuth2 client factory
+│   └── utils.ts
+└── .env.local                            # Environment variables
 ```
 
-## Getting Started
+---
 
-### 1. Requirements
-- Node.js (v18.17+ recommended)
-- A Google Gemini API Key ([Get one here](https://aistudio.google.com/app/apikey))
-- A Gmail account with an App Password for SMTP sending
+## 🚀 Getting Started
 
-### 2. Installation
-Clone the repository and install the dependencies:
+### 1. Clone & Install
+
 ```bash
+git clone https://github.com/moorthygithub/ai-sales-reply-generator.git
+cd ai-sales-reply-generator
 npm install
 ```
 
-### 3. Environment Variables
-Create a `.env.local` file in the root directory and add the following:
+### 2. Configure Environment Variables
 
-```env
-# Gemini AI Key
-GEMINI_API_KEY=your_gemini_api_key_here
+Copy the template and fill in your values:
 
-# Gmail SMTP Configuration
-EMAIL_USER=your_email@gmail.com
+```bash
+# .env.local
+
+# Gemini AI
+GEMINI_API_KEY=your_gemini_api_key
+
+# Gmail SMTP (Nodemailer)
+EMAIL_USER=your_gmail@gmail.com
 EMAIL_PASS=your_gmail_app_password
+
+# Google OAuth2 — Gmail API
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
 ```
 
-*Note on `EMAIL_PASS`: For Gmail, you must use an "App Password". Go to your Google Account > Security > 2-Step Verification > App Passwords to generate a 16-character code.*
+### 3. Set Up Google OAuth Credentials
 
-### 4. Running the Development Server
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project and enable the **Gmail API**
+3. Navigate to **APIs & Services → Credentials → Create OAuth 2.0 Client ID**
+4. Application type: **Web application**
+5. Add Authorized Redirect URI: `http://localhost:3000/api/auth/google/callback`
+6. Copy the **Client ID** and **Client Secret** into `.env.local`
+
+### 4. Get a Gemini API Key
+
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Generate a free API key and add it as `GEMINI_API_KEY`
+
+### 5. Set Up Gmail App Password (for Nodemailer)
+
+1. Enable **2-Factor Authentication** on your Google account
+2. Go to [Google Account → Security → App Passwords](https://myaccount.google.com/apppasswords)
+3. Generate a password for "Mail" and add it as `EMAIL_PASS`
+
+### 6. Run the App
+
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Usage Guide
-1. **Enter Customer Details**: Type in the customer's email address and paste their message into the text area.
-2. **Select Tone**: Choose how you want to sound (e.g., Professional or Friendly).
-3. **Generate**: Click the "Generate Reply" button.
-4. **Review**: The AI will output the detected customer intent, a subject line, and the email body.
-5. **Action**: Click "Send to Customer" to dispatch the email immediately via SMTP, or "Copy Reply" to paste it into your own email client.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🔄 User Flow
+
+```
+1. Click "Connect Gmail" → Google OAuth consent screen
+2. Authorize → redirected back to the app
+3. Gmail inbox loads (up to 5 unread emails)
+4. Click any email → Customer Email + Message auto-fill
+5. Choose a reply tone → click "Generate Reply"
+6. AI generates: Customer Intent + Subject + Email Body
+7. Click "Send to Customer" to send via Nodemailer
+   — or —
+   Click "Copy Reply" to copy to clipboard
+```
+
+---
+
+## 🛣️ API Routes
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/auth/google/login` | GET | Redirects to Google OAuth consent |
+| `/api/auth/google/callback` | GET | Handles OAuth code, sets secure cookies |
+| `/api/gmail/messages` | GET | Returns latest 5 unread Gmail messages |
+| `/api/generate-reply` | POST | Generates AI reply via Gemini |
+| `/api/send-email` | POST | Sends email via Nodemailer/Gmail SMTP |
+
+---
+
+## 🔒 Security
+
+- OAuth2 access and refresh tokens are stored in **HTTP-only, SameSite=Lax cookies** — inaccessible to JavaScript
+- Tokens are automatically refreshed when expired
+- All API routes validate credentials before processing
+- `.env.local` is git-ignored by default
+
+---
+
+## 🌿 Git Branches
+
+| Branch | Purpose |
+|---|---|
+| `main` | Stable production branch |
+| `ui-update` | UI improvements |
+| `feature/gmail-oauth-integration` | Gmail OAuth2 integration (current) |
+
+---
+
+## 📦 Dependencies
+
+```json
+{
+  "dependencies": {
+    "@google/genai": "^1.45.0",
+    "googleapis": "latest",
+    "nodemailer": "^8.0.2",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "@radix-ui/react-scroll-area": "latest",
+    "lucide-react": "^0.577.0",
+    "tailwind-merge": "^3.5.0",
+    "class-variance-authority": "^0.7.1"
+  }
+}
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m 'feat: add your feature'`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+MIT License — feel free to use and modify.
+
+---
+
+*Built with ❤️ using Next.js · Powered by Gemini AI · Gmail API*
