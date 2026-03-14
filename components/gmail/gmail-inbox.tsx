@@ -33,7 +33,7 @@ export default function GmailInbox({ onSelectEmail, selectedId, onConnectionChan
 
   const { execute: executeFetch } = useAppFetch("/api/gmail/messages", {
     immediate: false,
-    globalToastError: false, // Handled locally in the component UI
+    globalToastError: false,
   });
 
   const fetchMessages = useCallback(async (pageToken?: string) => {
