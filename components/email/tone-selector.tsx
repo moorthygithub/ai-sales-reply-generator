@@ -6,13 +6,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sparkles } from "lucide-react";
+import { REPLY_TONES } from "../constants/tones";
 
-const tones = [
-  { value: "professional", label: "Professional" },
-  { value: "friendly", label: "Friendly" },
-  { value: "formal", label: "Formal" },
-  { value: "short", label: "Short" },
-];
+
 
 interface ToneSelectorProps {
   value: string;
@@ -32,7 +28,7 @@ export default function ToneSelector({ value, onChange, disabled }: ToneSelector
           <SelectValue placeholder="Select a tone" />
         </SelectTrigger>
         <SelectContent>
-          {tones.map((t) => (
+          {REPLY_TONES.map((t) => (
             <SelectItem key={t.value} value={t.value} className="cursor-pointer">
               {t.label}
             </SelectItem>

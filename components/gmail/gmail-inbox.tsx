@@ -5,6 +5,7 @@ import EmailItem from "./email-item";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RefreshCw, Loader2, Inbox, AlertCircle, ExternalLink, LogIn, ChevronLeft, ChevronRight } from "lucide-react";
+import { useAppFetch } from "@/hooks/useAppFetch";
 
 interface GmailMessage {
   id: string;
@@ -26,46 +27,50 @@ export default function GmailInbox({ onSelectEmail, selectedId, onConnectionChan
   const [error, setError] = useState("");
   const [hasFetched, setHasFetched] = useState(false);
 
-  // Pagination state
   const [pageTokens, setPageTokens] = useState<string[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const { execute: executeFetch } = useAppFetch("/api/gmail/messages", {
+    immediate: false,
+    globalToastError: false,
+  });
+
   const fetchMessages = useCallback(async (pageToken?: string) => {
     setIsLoading(true);
     setError("");
+    let aborted = false;
 
     try {
       const url = pageToken 
         ? `/api/gmail/messages?pageToken=${pageToken}`
         : "/api/gmail/messages";
       
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (res.status === 401) {
-        setIsAuthenticated(false);
-        setMessages([]);
-        if (onConnectionChange) onConnectionChange(false, 0);
-        return;
-      }
-
-      if (!res.ok) {
-        setError(data.error || "Failed to fetch messages.");
-        return;
-      }
+      const data = await executeFetch({ url });
 
       setIsAuthenticated(data.authenticated);
       setMessages(data.messages ?? []);
       setNextPageToken(data.nextPageToken || null);
       if (onConnectionChange) onConnectionChange(data.authenticated, (data.messages ?? []).length);
-    } catch {
-      setError("Network error. Could not reach Gmail.");
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        aborted = true;
+        return;
+      }
+      if (err.status === 401) {
+        setIsAuthenticated(false);
+        setMessages([]);
+        if (onConnectionChange) onConnectionChange(false, 0);
+        return;
+      }
+      setError(err.message || "Network error. Could not reach Gmail.");
     } finally {
-      setIsLoading(false);
-      setHasFetched(true);
+      if (!aborted) {
+        setIsLoading(false);
+        setHasFetched(true);
+      }
     }
-  }, [onConnectionChange]);
+  }, [onConnectionChange, executeFetch]);
 
   // Initial fetch
   useEffect(() => {

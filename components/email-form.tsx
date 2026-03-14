@@ -39,7 +39,6 @@ export default function EmailForm({
   const [tone, setTone] = useState("professional");
   const [error, setError] = useState("");
 
-  // Auto-fill when an email is selected from Gmail inbox
   useEffect(() => {
     if (prefillEmail) setCustomerEmail(prefillEmail);
   }, [prefillEmail]);

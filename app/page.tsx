@@ -8,6 +8,7 @@ import EmailForm from "@/components/email/email-form";
 import ReplyOutput from "@/components/reply/reply-output";
 import { AlertCircle, Bot, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAppFetch } from "@/hooks/useAppFetch";
 
 interface GeneratedReply {
   customerEmail: string;
@@ -32,6 +33,16 @@ export default function Home() {
   const [isGmailConnected, setIsGmailConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const { execute: generateReply } = useAppFetch("/api/generate-reply", {
+    method: "POST",
+    immediate: false,
+  });
+
+  const { execute: executeLogout } = useAppFetch("/api/auth/google/logout", {
+    method: "POST",
+    immediate: false,
+  });
+
   const handleGenerate = async (data: {
     customerEmail: string;
     emailMessage: string;
@@ -40,26 +51,24 @@ export default function Home() {
     setIsLoading(true);
     setApiError("");
     setGeneratedReply(null);
+    let aborted = false;
 
     try {
-      const response = await fetch("/api/generate-reply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.emailMessage, tone: data.tone }),
+      const result = await generateReply({
+        body: { email: data.emailMessage, tone: data.tone },
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        setApiError(result.error || "Failed to generate reply. Please try again.");
+      setGeneratedReply({ ...result, customerEmail: data.customerEmail });
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        aborted = true;
         return;
       }
-
-      setGeneratedReply({ ...result, customerEmail: data.customerEmail });
-    } catch {
-      setApiError("Network error. Please check your connection and try again.");
+      setApiError(error.message || "Network error. Please check your connection and try again.");
     } finally {
-      setIsLoading(false);
+      if (!aborted) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -81,8 +90,12 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    await fetch("/api/auth/google/logout", { method: "POST" });
-    window.location.reload();
+    try {
+      await executeLogout();
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -97,21 +110,14 @@ export default function Home() {
       }
     >
       
-      {/* Top API Status / Quota Bar */}
       <QuotaBar 
         isGmailConnected={isGmailConnected} 
         unreadCount={unreadCount} 
       />
 
-      {/* 
-        Main 3-Panel Layout 
-        Desktop: 25% | 35% | 40% using explicit grid template columns 
-        Tablet: Mobile-stacked inbox, split form & reply
-      */}
       <div className="flex flex-col lg:grid lg:grid-cols-[25%_35%_minmax(0,1fr)] gap-6 flex-1 min-h-[600px] pb-6 mt-2">
         
-        {/* PANEL 1: Gmail Inbox */}
-        {/* On mobile/tablet, it drops below the form area unless explicitly styled by grid rules */}
+
         <div className="order-3 lg:order-1 flex flex-col h-full h-[500px] lg:h-auto">
           <GmailInbox 
             onSelectEmail={(sender, snippet) => {
@@ -123,7 +129,6 @@ export default function Home() {
           />
         </div>
 
-        {/* PANEL 2: Customer Input Form */}
         <div className="order-1 lg:order-2 flex flex-col h-full h-[600px] lg:h-auto">
           <EmailForm
             onGenerate={handleGenerate}
@@ -134,11 +139,8 @@ export default function Home() {
           />
         </div>
 
-        {/* PANEL 3: AI Reply Output */}
         <div className="order-2 lg:order-3 flex flex-col h-full h-[600px] lg:h-auto">
-          
-          {/* Error Banner */}
-          {apiError && (
+                    {apiError && (
             <div className="mb-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
               <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
               <div>
@@ -150,7 +152,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Loading Skeleton */}
           {isLoading ? (
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex-1 animate-pulse flex flex-col gap-6">
                <div className="flex items-center gap-3">
@@ -165,7 +166,6 @@ export default function Home() {
                <div className="flex-1 min-h-[200px] bg-slate-100 dark:bg-slate-800/60 rounded-lg" />
             </div>
           ) : generatedReply ? (
-            /* Output Panel */
             <ReplyOutput
               customerEmail={generatedReply.customerEmail}
               intent={generatedReply.intent}
@@ -173,7 +173,6 @@ export default function Home() {
               reply={generatedReply.reply}
             />
           ) : (
-            /* Empty State */
             <div className="bg-slate-50/50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
               <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-5 mb-4 shadow-sm border border-slate-200/50 dark:border-slate-700/50">
                 <Bot className="h-8 w-8 text-slate-400 dark:text-slate-500" />

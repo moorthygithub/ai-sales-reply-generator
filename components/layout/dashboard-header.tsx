@@ -33,7 +33,6 @@ export default function DashboardHeader({ rightContent }: { rightContent?: React
           </Link>
         </nav>
 
-        {/* Right Content (Logout usually lives here) */}
         {rightContent && <div className="flex items-center gap-2">{rightContent}</div>}
       </div>
     </header>
