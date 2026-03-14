@@ -16,46 +16,35 @@ export default function EmailItem({
   isSelected,
   onClick,
 }: EmailItemProps) {
+  // Extract first letter of sender for Avatar
+  const initial = sender.charAt(0).toUpperCase();
+
   return (
-    <button
+    <div
       onClick={onClick}
-      className={`w-full text-left rounded-xl border p-4 transition-all duration-200 group relative overflow-hidden ${
+      className={`flex gap-3 p-3 rounded-lg cursor-pointer transition-colors border-b last:border-0 ${
         isSelected
-          ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 dark:border-indigo-500/40 shadow-sm"
-          : "border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 hover:border-indigo-300/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm"
+          ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800"
+          : "hover:bg-gray-50 dark:hover:bg-slate-800/60 border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900"
       }`}
     >
-      {/* Selected Indicator Bar */}
-      {isSelected && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-xl" />
-      )}
+      {/* Avatar */}
+      <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 font-semibold text-sm">
+        {initial}
+      </div>
 
-      <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className="flex-shrink-0 h-9 w-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold text-sm shadow-sm border border-indigo-200/50 dark:border-indigo-800/50">
-          {sender.charAt(0).toUpperCase()}
+      {/* Content */}
+      <div className="flex flex-col flex-1 min-w-0 w-full overflow-hidden">
+        <div className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate pr-2">
+          {sender}
         </div>
-
-        <div className="flex-1 min-w-0">
-          {/* Sender */}
-          <div className="flex items-center justify-between mb-0.5">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
-              {sender}
-            </p>
-            {isSelected && (
-              <span className="flex-shrink-0 h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-            )}
-          </div>
-          {/* Subject */}
-          <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate mb-1">
-            {subject}
-          </p>
-          {/* Snippet */}
-          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-            {snippet}
-          </p>
+        <div className="text-sm font-semibold text-gray-800 dark:text-slate-200 truncate pr-2 mt-0.5">
+          {subject}
+        </div>
+        <div className="text-xs text-gray-500 dark:text-slate-400 line-clamp-2 mt-1 pr-2 leading-relaxed">
+          {snippet}
         </div>
       </div>
-    </button>
+    </div>
   );
 }

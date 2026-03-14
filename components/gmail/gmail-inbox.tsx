@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import EmailItem from "./email-item";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { RefreshCw, Loader2, Inbox, AlertCircle, ExternalLink, LogIn } from "lucide-react";
+import { RefreshCw, Loader2, Inbox, AlertCircle, ExternalLink, LogIn, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface GmailMessage {
   id: string;
@@ -27,12 +26,21 @@ export default function GmailInbox({ onSelectEmail, selectedId, onConnectionChan
   const [error, setError] = useState("");
   const [hasFetched, setHasFetched] = useState(false);
 
-  const fetchMessages = useCallback(async () => {
+  // Pagination state
+  const [pageTokens, setPageTokens] = useState<string[]>([]);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchMessages = useCallback(async (pageToken?: string) => {
     setIsLoading(true);
     setError("");
 
     try {
-      const res = await fetch("/api/gmail/messages");
+      const url = pageToken 
+        ? `/api/gmail/messages?pageToken=${pageToken}`
+        : "/api/gmail/messages";
+      
+      const res = await fetch(url);
       const data = await res.json();
 
       if (res.status === 401) {
@@ -49,6 +57,7 @@ export default function GmailInbox({ onSelectEmail, selectedId, onConnectionChan
 
       setIsAuthenticated(data.authenticated);
       setMessages(data.messages ?? []);
+      setNextPageToken(data.nextPageToken || null);
       if (onConnectionChange) onConnectionChange(data.authenticated, (data.messages ?? []).length);
     } catch {
       setError("Network error. Could not reach Gmail.");
@@ -62,6 +71,32 @@ export default function GmailInbox({ onSelectEmail, selectedId, onConnectionChan
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
+
+  const handleRefresh = () => {
+    setPageTokens([]);
+    setCurrentPage(1);
+    fetchMessages();
+  };
+
+  const handleNextPage = () => {
+    if (nextPageToken && !isLoading) {
+      setPageTokens((prev) => [...prev, nextPageToken]);
+      setCurrentPage((prev) => prev + 1);
+      fetchMessages(nextPageToken);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1 && !isLoading) {
+      const newTokens = [...pageTokens];
+      newTokens.pop(); // Remove current page's token
+      setPageTokens(newTokens);
+      setCurrentPage((prev) => prev - 1);
+      
+      const targetToken = newTokens.length > 0 ? newTokens[newTokens.length - 1] : undefined;
+      fetchMessages(targetToken);
+    }
+  };
 
   const handleConnectGmail = () => {
     window.location.href = "/api/auth/google/login";
@@ -86,7 +121,7 @@ export default function GmailInbox({ onSelectEmail, selectedId, onConnectionChan
           <Button
             variant="ghost"
             size="icon"
-            onClick={fetchMessages}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="h-8 w-8 hover:bg-slate-200 dark:hover:bg-slate-800"
             title="Refresh inbox"
@@ -144,21 +179,54 @@ export default function GmailInbox({ onSelectEmail, selectedId, onConnectionChan
           </p>
         </div>
       ) : (
-        <ScrollArea className="flex-1">
-          <div className="p-3 space-y-2">
-            {messages.map((msg) => (
-              <EmailItem
-                key={msg.id}
-                id={msg.id}
-                sender={msg.sender}
-                subject={msg.subject}
-                snippet={msg.snippet}
-                isSelected={selectedId === msg.id}
-                onClick={() => onSelectEmail(msg.sender, msg.snippet)}
-              />
-            ))}
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto min-h-0 w-full">
+            <div className="flex flex-col">
+              {messages.map((msg) => (
+                <EmailItem
+                  key={msg.id}
+                  id={msg.id}
+                  sender={msg.sender}
+                  subject={msg.subject}
+                  snippet={msg.snippet}
+                  isSelected={selectedId === msg.id}
+                  onClick={() => onSelectEmail(msg.sender, msg.snippet)}
+                />
+              ))}
+            </div>
           </div>
-        </ScrollArea>
+          
+          {/* Pagination Controls */}
+          {messages.length > 0 && (
+            <div className="p-3 border-t bg-gray-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 mt-auto shrink-0 w-full overflow-hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1 || isLoading}
+                className="h-8 px-2 sm:px-3 text-xs font-medium shrink-0"
+              >
+                <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Previous</span>
+              </Button>
+              
+              <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+                Page {currentPage}
+              </span>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={!nextPageToken || isLoading}
+                className="h-8 px-2 sm:px-3 text-xs font-medium shrink-0"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4 sm:ml-1" />
+              </Button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Footer Tools */}

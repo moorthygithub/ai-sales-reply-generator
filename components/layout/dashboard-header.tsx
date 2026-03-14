@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
-import { Bot, Sparkles } from "lucide-react";
+import { Bot, Sparkles, LayoutDashboard, FileText } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardHeader({ rightContent }: { rightContent?: ReactNode }) {
   return (
@@ -19,7 +20,21 @@ export default function DashboardHeader({ rightContent }: { rightContent?: React
             </p>
           </div>
         </div>
-        {rightContent && <div>{rightContent}</div>}
+
+        {/* Center Navigation */}
+        <nav className="hidden md:flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 transition-colors">
+            <LayoutDashboard className="h-4 w-4" />
+            Inbox
+          </Link>
+          <Link href="/docs" className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 transition-colors">
+            <FileText className="h-4 w-4" />
+            Docs
+          </Link>
+        </nav>
+
+        {/* Right Content (Logout usually lives here) */}
+        {rightContent && <div className="flex items-center gap-2">{rightContent}</div>}
       </div>
     </header>
   );
