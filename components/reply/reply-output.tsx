@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import IntentDisplay from "./intent-display";
 import SubjectDisplay from "./subject-display";
 import { Copy, Check, Send, Loader2, Bot, FileText } from "lucide-react";
+import { useAppFetch } from "@/hooks/useAppFetch";
 
 interface ReplyOutputProps {
   customerEmail: string;
@@ -40,35 +41,39 @@ export default function ReplyOutput({ customerEmail, intent, subject, reply }: R
     }
   };
 
+  const { execute: sendEmail } = useAppFetch("/api/send-email", {
+    method: "POST",
+    immediate: false,
+    globalToastError: false,
+  });
+
   const handleSendEmail = async () => {
     setIsSending(true);
     setSendError("");
     setSendSuccess(false);
+    let aborted = false;
 
     try {
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await sendEmail({
+        body: {
           to: customerEmail,
           subject,
           text: reply,
-        }),
+        },
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        setSendError(result.error || "Failed to send email.");
-        return;
-      }
 
       setSendSuccess(true);
       setTimeout(() => setSendSuccess(false), 5000);
-    } catch {
-      setSendError("Network error. Could not send email.");
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        aborted = true;
+        return;
+      }
+      setSendError(err.message || "Network error. Could not send email.");
     } finally {
-      setIsSending(false);
+      if (!aborted) {
+        setIsSending(false);
+      }
     }
   };
 
@@ -100,7 +105,6 @@ export default function ReplyOutput({ customerEmail, intent, subject, reply }: R
             <FileText className="h-3.5 w-3.5 text-slate-500" />
             Email Body
           </label>
-          {/* Constrain height and scroll to match the SaaS look */}
           <ScrollArea className="flex-1 h-[250px] rounded-lg border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900 shadow-inner">
             <div className="p-4 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed font-normal">
               {reply}
@@ -115,7 +119,6 @@ export default function ReplyOutput({ customerEmail, intent, subject, reply }: R
         </p>
       )}
 
-      {/* Action Buttons */}
       <div className="mt-6 flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
         <Button
           onClick={handleSendEmail}

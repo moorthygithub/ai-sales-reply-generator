@@ -18,8 +18,7 @@ const defaultUsage: UsageStats = {
   lastReset: today(),
 };
 
-// Next.js hot-reloads clear module-level variables in development. 
-// We attach it to the `global` object to persist across API requests.
+
 const globalForUsage = globalThis as unknown as { usage: UsageStats | undefined };
 
 export const usage: UsageStats = globalForUsage.usage ?? defaultUsage;

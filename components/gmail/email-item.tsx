@@ -16,7 +16,6 @@ export default function EmailItem({
   isSelected,
   onClick,
 }: EmailItemProps) {
-  // Extract first letter of sender for Avatar
   const initial = sender.charAt(0).toUpperCase();
 
   return (
